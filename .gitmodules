@@ -1,0 +1,3 @@
+[submodule "poke_data"]
+	path = poke_data
+	url = https://github.com/Baduit/poke_data.git
