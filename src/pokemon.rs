@@ -47,7 +47,6 @@ pub fn get_names(mut data_dir: PathBuf) -> Result<HashMap<Lang, Vec<String>>, Re
     Ok(names)
 }
 
-
 pub fn get_random_pokemon(mut data_dir: PathBuf, lang: &str) -> Result<Pokemon, ReadingError> {
     data_dir.push("generated_data");
     data_dir.push(lang);
@@ -58,7 +57,7 @@ pub fn get_random_pokemon(mut data_dir: PathBuf, lang: &str) -> Result<Pokemon, 
 /*
     Small types
 */
-type Lang = String;
+pub type Lang = String;
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct Type(String);
