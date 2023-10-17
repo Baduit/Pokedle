@@ -47,6 +47,30 @@ pub fn get_names(mut data_dir: PathBuf) -> Result<HashMap<Lang, Vec<String>>, Re
     Ok(names)
 }
 
+pub fn get_all_pokemons(mut data_dir: PathBuf) -> Result<HashMap<Lang, Vec<Pokemon>>, ReadingError> {
+    let mut pokemons_by_lang: HashMap<Lang, Vec<Pokemon>> = HashMap::new();
+
+    data_dir.push("generated_data");
+
+    for lang_dir in std::fs::read_dir(data_dir)? {
+        let lang_dir = lang_dir?;
+        let lang = get_lang(lang_dir.path().file_name())?;
+
+        let mut lang_dir = lang_dir.path().to_path_buf();
+        lang_dir.push("pokedle");
+
+        let mut pokemons = Vec::new();
+        for poke_file in std::fs::read_dir(lang_dir)? {
+            let poke_file = poke_file?; 
+            pokemons.push(read_pokemon(poke_file.path())?);
+        }
+
+        pokemons_by_lang.insert(lang, pokemons);
+    };
+
+    Ok(pokemons_by_lang)
+}
+
 pub fn get_random_pokemon(mut data_dir: PathBuf, lang: &str) -> Result<Pokemon, ReadingError> {
     data_dir.push("generated_data");
     data_dir.push(lang);
@@ -166,5 +190,14 @@ mod tests {
         let names = get_names(d).unwrap();
         assert_eq!(names["fr"][0], "Bulbizarre");
         assert_eq!(names["de"][0], "Bisasam");
+    }
+
+    #[test]
+    fn get_all_pokemons_of_all_lang() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("poke_data");
+        let names = get_all_pokemons(d).unwrap();
+        assert_eq!(names["fr"][0].name, "Bulbizarre");
+        assert_eq!(names["de"][0].name, "Bisasam");
     }
 }
