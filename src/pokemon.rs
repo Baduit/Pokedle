@@ -4,7 +4,6 @@ use std::ffi::OsStr;
 use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
 
-use rand::seq::IteratorRandom;
 use serde::Deserialize;
 use thiserror::Error;
 
@@ -14,8 +13,6 @@ pub enum ReadingError {
     SerdeError(#[from] serde_json::Error),
     #[error("Error while deserializing")]
     OpeningError(#[from] std::io::Error),
-    #[error("Error while choosing a random file")]
-    RandomError,
     #[error("Invalid pokedata structure")]
     WrongFileStructure,
 }
@@ -169,13 +166,6 @@ pub fn get_all_pokemons(
     Ok(pokemons_by_lang)
 }
 
-pub fn get_random_pokemon(mut data_dir: PathBuf, lang: &str) -> Result<Pokemon, ReadingError> {
-    data_dir.push("generated_data");
-    data_dir.push(lang);
-    data_dir.push("pokedle");
-    read_pokemon(get_random_file(&data_dir)?)
-}
-
 /*
     Small types
 */
@@ -228,20 +218,6 @@ where
     Ok(pokemon)
 }
 
-fn get_random_file<P>(dir_name: P) -> Result<PathBuf, ReadingError>
-where
-    P: AsRef<Path>,
-{
-    let mut rng = rand::thread_rng();
-    let files = std::fs::read_dir(dir_name)?;
-    let file: DirEntry = match files.choose(&mut rng) {
-        Some(Ok(file)) => file,
-        _ => return Err(ReadingError::RandomError),
-    };
-    let path = file.path().to_path_buf();
-    Ok(path)
-}
-
 /*
     Tests
 */
@@ -264,21 +240,6 @@ mod tests {
         d.push("poke_data/generated_data/fr/pokedle/11.json");
         let pokemon = read_pokemon(d).unwrap();
         assert_eq!(pokemon, chrysacier);
-    }
-
-    #[test]
-    fn get_a_random_file() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("poke_data/generated_data/fr/pokedle");
-        let random_file = get_random_file(d).unwrap();
-        assert_eq!(random_file.extension().unwrap(), "json");
-    }
-
-    #[test]
-    fn get_a_random_pokemon() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("poke_data");
-        get_random_pokemon(d, "fr").unwrap();
     }
 
     #[test]

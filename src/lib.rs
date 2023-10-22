@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 mod pokemon;
-pub use pokemon::{get_names, get_random_pokemon, Lang, Pokemon, ReadingError};
+pub use pokemon::{get_names, Lang, Pokemon, ReadingError};
 
 // En fait j'ai âpas d'id ou d'état coté serveur, on peut faire comme loldle et essai infini
 // Du coup le seul truc à stocker sera le pokémon du jour
