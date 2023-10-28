@@ -1,7 +1,7 @@
 use pokemon::get_all_pokemons;
 use rand::distributions::Uniform;
 use rand::Rng;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::iter::zip;
 use std::path::{Path, PathBuf};
 
@@ -82,7 +82,8 @@ impl PokemonHandler {
 }
 
 struct Pokedle {
-    handlers: HashMap<Lang, PokemonHandler>,
+    handlers: BTreeMap<Lang, PokemonHandler>,
+}
 }
 
 impl Pokedle {

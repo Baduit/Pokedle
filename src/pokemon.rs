@@ -1,5 +1,5 @@
 use fs::File;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::ffi::OsStr;
 use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
@@ -128,8 +128,8 @@ pub fn compare_pokemons(guess: &Pokemon, pokemon_to_guess: &Pokemon) -> PokemonC
     }
 }
 
-pub fn get_names(mut data_dir: PathBuf) -> Result<HashMap<Lang, Vec<String>>, ReadingError> {
-    let mut names = HashMap::new();
+pub fn get_names(mut data_dir: PathBuf) -> Result<BTreeMap<Lang, Vec<String>>, ReadingError> {
+    let mut names = BTreeMap::new();
     data_dir.push("generated_data");
     for dir in std::fs::read_dir(data_dir)? {
         let dir = dir?;
@@ -142,8 +142,8 @@ pub fn get_names(mut data_dir: PathBuf) -> Result<HashMap<Lang, Vec<String>>, Re
 
 pub fn get_all_pokemons(
     mut data_dir: PathBuf,
-) -> Result<HashMap<Lang, Vec<Pokemon>>, ReadingError> {
-    let mut pokemons_by_lang: HashMap<Lang, Vec<Pokemon>> = HashMap::new();
+) -> Result<BTreeMap<Lang, Vec<Pokemon>>, ReadingError> {
+    let mut pokemons_by_lang: BTreeMap<Lang, Vec<Pokemon>> = BTreeMap::new();
 
     data_dir.push("generated_data");
 
