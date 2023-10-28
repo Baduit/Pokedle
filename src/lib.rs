@@ -10,11 +10,17 @@ use thiserror::Error;
 
 mod pokemon;
 pub use pokemon::{
-    get_names, Color, Generation, Height, Lang, Pokemon, ReadingError, Type, Weight,
+    compare_pokemons, get_names, Color, ColorComparison, Generation, Height, Lang,
+    NumberComparison, Pokemon, PokemonComparison, ReadingError, Type, TypesComparison, Weight,
 };
 
-// En fait j'ai âpas d'id ou d'état coté serveur, on peut faire comme loldle et essai infini
-// Du coup le seul truc à stocker sera le pokémon du jour
+#[derive(Error, Debug)]
+pub enum PokedleError {
+    #[error("The language {0} does not exist")]
+    LangDoesNotExist(String),
+    #[error("The pokemon {0} does not exist")]
+    PokemonDoesNotExist(String),
+}
 
 struct PokemonHandler {
     pokemon_names: Vec<String>,
@@ -22,6 +28,7 @@ struct PokemonHandler {
     daily_pokemon_index: usize,
     last_pokemon_update: DateTime<Utc>,
     // Todo: add an id to know if the pokemon changed while the player was playing
+    // Todo: keep the index of the previous pokemon to guess
 }
 
 impl PokemonHandler {
@@ -32,12 +39,12 @@ impl PokemonHandler {
         let current_datetime = Utc::now();
         let first_generation = Utc
             .with_ymd_and_hms(
-            current_datetime.year(),
-            current_datetime.month(),
-            current_datetime.day(),
-            6,
-            0,
-            0,
+                current_datetime.year(),
+                current_datetime.month(),
+                current_datetime.day(),
+                6,
+                0,
+                0,
             )
             .unwrap();
 
@@ -55,10 +62,10 @@ impl PokemonHandler {
         rng.sample(pokemon_distribution)
     }
 
-    pub fn get_pokemon_by_name(&self, name: &str) -> Result<&Pokemon, ()> {
+    pub fn get_pokemon_by_name(&self, name: &str) -> Result<&Pokemon, PokedleError> {
         match self.pokemons.iter().filter(|p| p.name == name).next() {
             Some(pokemon) => Ok(pokemon),
-            None => Err(()),
+            None => Err(PokedleError::PokemonDoesNotExist(String::from(name))),
         }
     }
 
@@ -68,16 +75,16 @@ impl PokemonHandler {
     }
 
     pub fn update_daily_pokemon_if_needed(&mut self) {
-		if self.is_update_needed() {
+        if self.is_update_needed() {
             self.daily_pokemon_index =
                 PokemonHandler::get_random_pokemon_index(self.pokemons.len());
-			self.last_pokemon_update = Utc::now();
-		}
-	}
+            self.last_pokemon_update = Utc::now();
+        }
+    }
 
     fn is_update_needed(&self) -> bool {
-		let diff_time = Utc::now() - self.last_pokemon_update;
-        diff_time.num_days() >= 1 
+        let diff_time = Utc::now() - self.last_pokemon_update;
+        diff_time.num_days() >= 1
     }
 }
 
@@ -93,10 +100,10 @@ pub enum PokedleInitError {
     IncoherentData,
 }
 
-#[derive(Error, Debug)]
-pub enum PokdleError {
-    #[error("The language {0} does not exist")]
-    LangDoesNotExist(String),
+#[derive(Debug, PartialEq)]
+pub enum GuessResult {
+    Success,
+    Failure(PokemonComparison),
 }
 
 impl Pokedle {
@@ -124,9 +131,28 @@ impl Pokedle {
         Ok(pokedle)
     }
 
-    pub fn guess(&self, lang: &str, pokemon_name: &str) {}
+    pub fn guess(&mut self, lang: &str, pokemon_name: &str) -> Result<GuessResult, PokedleError> {
+        let handler = match self.handlers.get(lang) {
+            Some(handler) => handler,
+            None => return Err(PokedleError::LangDoesNotExist(String::from(lang))),
+        };
 
-    pub fn get_names(&self, lang: &str) {}
+        let daily_pokemon = handler.get_daily_pokemon();
+        if pokemon_name == daily_pokemon.name {
+            Ok(GuessResult::Success)
+        } else {
+            let input_pokemon = handler.get_pokemon_by_name(pokemon_name)?;
+            let comparison = compare_pokemons(input_pokemon, daily_pokemon);
+            Ok(GuessResult::Failure(comparison))
+        }
+    }
+
+    pub fn get_names(&self, lang: &str) -> Result<&Vec<String>, PokedleError> {
+        match self.handlers.get(lang) {
+            Some(handler) => Ok(&handler.pokemon_names),
+            None => Err(PokedleError::LangDoesNotExist(String::from(lang))),
+        }
+    }
 }
 
 /*
@@ -154,11 +180,47 @@ mod tests {
     }
 
     #[test]
-    fn game_scenario() {}
+    fn game_scenario() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("small_test_data");
+        let mut pokedle = Pokedle::new(d).unwrap();
+        // Cheat a bit to know which pokemon we are trying to guess
+        pokedle
+            .handlers
+            .get_mut("fr")
+            .expect("Error in the test, not in the code")
+            .daily_pokemon_index = 0;
+
+        pokedle
+            .get_names("lol")
+            .expect_err("'lol' should not exist");
+        pokedle.get_names("fr").unwrap();
+
+        pokedle
+            .guess("lo", "Chenipan")
+            .expect_err("'lo' should not be a valid language");
+        pokedle
+            .guess("fr", "Sacha")
+            .expect_err("'Sacha' should not be a pokemon");
+        assert_eq!(
+            pokedle.guess("fr", "Herbizarre").unwrap(),
+            GuessResult::Failure(PokemonComparison {
+                height: NumberComparison::Higher,
+                weight: NumberComparison::Higher,
+                types: TypesComparison::Equal,
+                color: ColorComparison::Equal,
+                generation: NumberComparison::Equal,
+            })
+        );
+        assert_eq!(
+            pokedle.guess("fr", "Bulbizarre").unwrap(),
+            GuessResult::Success
+        );
+    }
 
     /*
-    ** PokemonHandler tests
-    */
+     ** PokemonHandler tests
+     */
     #[test]
     fn pokemon_handler_creation() {
         let (names, pokemons) = generate_dummy_pokemon_data();
@@ -233,7 +295,7 @@ mod tests {
 
         // Change the last update so it is at least one day in the past, now it should change
         let current_datetime = Utc::now();
-        handler.last_pokemon_update =  Utc
+        handler.last_pokemon_update = Utc
             .with_ymd_and_hms(
                 current_datetime.year(),
                 current_datetime.month(),
