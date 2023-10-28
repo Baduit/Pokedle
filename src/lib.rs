@@ -3,7 +3,7 @@ use rand::distributions::Uniform;
 use rand::Rng;
 use std::collections::BTreeMap;
 use std::iter::zip;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use chrono::prelude::*;
 use thiserror::Error;
@@ -161,6 +161,7 @@ impl Pokedle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     /*
      ** Pokedle tests

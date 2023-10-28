@@ -1,7 +1,7 @@
 use fs::File;
 use std::collections::BTreeMap;
 use std::ffi::OsStr;
-use std::fs::{self, DirEntry};
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
@@ -61,16 +61,7 @@ pub struct PokemonComparison {
     pub generation: NumberComparison,
 }
 
-pub const COMPARISON_ON_GOOD_GUESS: PokemonComparison = PokemonComparison {
-    height: NumberComparison::Equal,
-    weight: NumberComparison::Equal,
-    types: TypesComparison::Equal,
-    color: ColorComparison::Equal,
-    generation: NumberComparison::Equal,
-};
-
 // It does not check the name because there is no need to compare pokemons if the name is the same
-// And in this case this function should not be called and the constant COMPARISON_ON_GOOD_GUESS should be used instead
 pub fn compare_pokemons(guess: &Pokemon, pokemon_to_guess: &Pokemon) -> PokemonComparison {
     let height = if guess.height == pokemon_to_guess.height {
         NumberComparison::Equal
@@ -281,7 +272,15 @@ mod tests {
             generation: Generation(1),
         };
 
-        assert_eq!(compare_pokemons(&chrysacier, &chrysacier_bis), COMPARISON_ON_GOOD_GUESS);
+        let good_guess : PokemonComparison = PokemonComparison {
+            height: NumberComparison::Equal,
+            weight: NumberComparison::Equal,
+            types: TypesComparison::Equal,
+            color: ColorComparison::Equal,
+            generation: NumberComparison::Equal,
+        };
+
+        assert_eq!(compare_pokemons(&chrysacier, &chrysacier_bis), good_guess);
     }
 
     #[test]
