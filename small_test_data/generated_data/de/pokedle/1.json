@@ -1,0 +1,11 @@
+{
+    "color": "Grün",
+    "generation": 1,
+    "height": 0.7,
+    "name": "Bisasam",
+    "types": [
+        "Pflanze",
+        "Gift"
+    ],
+    "weight": 6.9
+}

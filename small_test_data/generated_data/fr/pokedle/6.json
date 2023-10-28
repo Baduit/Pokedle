@@ -1,0 +1,11 @@
+{
+    "color": "Rouge",
+    "generation": 1,
+    "height": 1.7,
+    "name": "Dracaufeu",
+    "types": [
+        "Feu",
+        "Vol"
+    ],
+    "weight": 90.5
+}

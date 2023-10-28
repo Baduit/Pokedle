@@ -1,0 +1,11 @@
+{
+    "color": "Grün",
+    "generation": 1,
+    "height": 2.0,
+    "name": "Bisaflor",
+    "types": [
+        "Pflanze",
+        "Gift"
+    ],
+    "weight": 100.0
+}

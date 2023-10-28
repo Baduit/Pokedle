@@ -1,0 +1,11 @@
+{
+    "color": "Rot",
+    "generation": 1,
+    "height": 1.7,
+    "name": "Glurak",
+    "types": [
+        "Feuer",
+        "Flug"
+    ],
+    "weight": 90.5
+}

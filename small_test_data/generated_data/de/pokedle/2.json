@@ -1,0 +1,11 @@
+{
+    "color": "Grün",
+    "generation": 1,
+    "height": 1.0,
+    "name": "Bisaknosp",
+    "types": [
+        "Pflanze",
+        "Gift"
+    ],
+    "weight": 13.0
+}

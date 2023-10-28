@@ -1,0 +1,11 @@
+{
+    "color": "Vert",
+    "generation": 1,
+    "height": 0.7,
+    "name": "Bulbizarre",
+    "types": [
+        "Plante",
+        "Poison"
+    ],
+    "weight": 6.9
+}

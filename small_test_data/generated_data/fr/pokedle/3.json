@@ -1,0 +1,11 @@
+{
+    "color": "Vert",
+    "generation": 1,
+    "height": 2.0,
+    "name": "Florizarre",
+    "types": [
+        "Plante",
+        "Poison"
+    ],
+    "weight": 100.0
+}
