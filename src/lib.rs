@@ -87,9 +87,31 @@ struct Pokedle {
 }
 
 impl Pokedle {
-    pub fn guess() {}
+    pub fn new<P>(pokle_dir: P) -> Pokedle
+    where
+        P: AsRef<Path>,
+    {
+        // Expect is temporary, todo error handling
+        let names = get_names(pokle_dir.as_ref().to_path_buf()).expect("Can't load the names.");
+        let pokemons = get_all_pokemons(pokle_dir.as_ref().to_path_buf())
+            .expect("Can't load the pokemons data");
 
-    pub fn get_names() {}
+        let mut pokedle = Pokedle {
+            handlers: BTreeMap::new(),
+        };
+
+        for ((name_lang, names), (pokemon_lang, pokemons)) in zip(names, pokemons) {
+            assert_eq!(name_lang, pokemon_lang); // todo: real error handling
+            pokedle
+                .handlers
+                .insert(name_lang, PokemonHandler::new(names, pokemons));
+        }
+        pokedle
+    }
+
+    pub fn guess(&self, lang: &str, pokemon_name: &str) {}
+
+    pub fn get_names(&self, lang: &str) {}
 }
 
 /*
