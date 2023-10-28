@@ -1,13 +1,17 @@
+use pokemon::get_all_pokemons;
 use rand::distributions::Uniform;
 use rand::Rng;
 use std::collections::HashMap;
+use std::iter::zip;
 use std::path::{Path, PathBuf};
 
 use chrono::prelude::*;
 use thiserror::Error;
 
 mod pokemon;
-pub use pokemon::{get_names, Lang, Pokemon, ReadingError};
+pub use pokemon::{
+    get_names, Color, Generation, Height, Lang, Pokemon, ReadingError, Type, Weight,
+};
 
 // En fait j'ai âpas d'id ou d'état coté serveur, on peut faire comme loldle et essai infini
 // Du coup le seul truc à stocker sera le pokémon du jour
@@ -17,33 +21,25 @@ struct PokemonHandler {
     pokemons: Vec<Pokemon>,
     daily_pokemon_index: usize,
     last_pokemon_update: DateTime<Utc>,
+    // Todo: add an id to know if the pokemon changed while the player was playing
 }
-
-// Todo make proper error types
-type UnknownPokemon = ();
-
-/* #[derive(Error, Debug)]
-enum PokemonHandlerCreationError {
-    #[error("Error while to read data files")]
-    ReadingError(#[from] ReadingError),
-    #[error("Error while trying to find a random pokemon")]
-    RandomFailure,
-} */
 
 impl PokemonHandler {
     pub fn new(pokemon_names: Vec<String>, pokemons: Vec<Pokemon>) -> PokemonHandler {
         let number_of_pokemons = pokemons.len();
 
         // We want to set the generation time in the night
-        let mut current_datetime = Utc::now();
-        let first_generation = Utc.with_ymd_and_hms(
+        let current_datetime = Utc::now();
+        let first_generation = Utc
+            .with_ymd_and_hms(
             current_datetime.year(),
             current_datetime.month(),
             current_datetime.day(),
             6,
             0,
             0,
-        ).unwrap();
+            )
+            .unwrap();
 
         PokemonHandler {
             pokemon_names,
@@ -59,7 +55,7 @@ impl PokemonHandler {
         rng.sample(pokemon_distribution)
     }
 
-    pub fn get_pokemon_by_name(&self, name: &str) -> Result<&Pokemon, UnknownPokemon> {
+    pub fn get_pokemon_by_name(&self, name: &str) -> Result<&Pokemon, ()> {
         match self.pokemons.iter().filter(|p| p.name == name).next() {
             Some(pokemon) => Ok(pokemon),
             None => Err(()),
@@ -73,7 +69,8 @@ impl PokemonHandler {
 
     pub fn update_daily_pokemon_if_needed(&mut self) {
 		if self.is_update_needed() {
-			self.daily_pokemon_index = PokemonHandler::get_random_pokemon_index(self.pokemons.len());
+            self.daily_pokemon_index =
+                PokemonHandler::get_random_pokemon_index(self.pokemons.len());
 			self.last_pokemon_update = Utc::now();
 		}
 	}
@@ -94,4 +91,159 @@ impl Pokedle {
     pub fn get_names() {}
 }
 
-fn compare_pokemons() {}
+/*
+    Tests
+*/
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+    /*
+    ** PokemonHandler tests
+    */
+    #[test]
+    fn pokemon_handler_creation() {
+        let (names, pokemons) = generate_dummy_pokemon_data();
+        let handler = PokemonHandler::new(names, pokemons.clone());
+        let daily_pokemon = handler.get_daily_pokemon();
+        assert!(pokemons.contains(daily_pokemon));
+    }
+
+    #[test]
+    fn pokemon_handler_get_pokemon_by_name() {
+        let (names, pokemons) = generate_dummy_pokemon_data();
+        let handler = PokemonHandler::new(names, pokemons.clone());
+
+        assert_eq!(
+            handler
+                .get_pokemon_by_name("Chrysacier")
+                .expect("Oh no, the pokemon is not found"),
+            pokemons
+                .get(0)
+                .expect("The error is in the test, not in the code")
+        );
+
+        assert_eq!(
+            handler
+                .get_pokemon_by_name("ChrysacierBis")
+                .expect("Oh no, the pokemon is not found"),
+            pokemons
+                .get(1)
+                .expect("The error is in the test, not in the code")
+        );
+
+        assert_eq!(
+            handler
+                .get_pokemon_by_name("BlagueSurLesDaron-ne-s")
+                .expect("Oh no, the pokemon is not found"),
+            pokemons
+                .get(2)
+                .expect("The error is in the test, not in the code")
+        );
+
+        assert_eq!(
+            handler
+                .get_pokemon_by_name("Blanche")
+                .expect("Oh no, the pokemon is not found"),
+            pokemons
+                .get(3)
+                .expect("The error is in the test, not in the code")
+        );
+
+        assert_eq!(
+            handler
+                .get_pokemon_by_name("Noirette")
+                .expect("Oh no, the pokemon is not found"),
+            pokemons
+                .get(4)
+                .expect("The error is in the test, not in the code")
+        );
+    }
+
+    #[test]
+    fn pokemon_handler_update() {
+        let (names, pokemons) = generate_dummy_pokemon_data();
+        let mut handler = PokemonHandler::new(names, pokemons.clone());
+        let first_index = handler.daily_pokemon_index;
+
+        // Do it a lot, to be sure that's not just luck, theorically it is still possible but it would really improbable
+        for _ in [0..100] {
+            handler.update_daily_pokemon_if_needed();
+            // The creation just happened, so it should not change
+            assert_eq!(first_index, handler.daily_pokemon_index);
+        }
+
+        // Change the last update so it is at least one day in the past, now it should change
+        let current_datetime = Utc::now();
+        handler.last_pokemon_update =  Utc
+            .with_ymd_and_hms(
+                current_datetime.year(),
+                current_datetime.month(),
+                current_datetime.day() - 1,
+                6,
+                0,
+                0,
+            )
+            .unwrap();
+        // Do it until it is different (because there is random) with a limitation to not have an infinite loop if it fails
+        let mut index_changed = false;
+        for _ in [0..100] {
+            handler.update_daily_pokemon_if_needed();
+            // The creation just happened, so it should not change
+            if first_index != handler.daily_pokemon_index {
+                index_changed = true;
+                break;
+            }
+        }
+        assert!(index_changed);
+    }
+
+    fn generate_dummy_pokemon_data() -> (Vec<String>, Vec<Pokemon>) {
+        let pokemons = vec![
+            Pokemon {
+                name: String::from("Chrysacier"),
+                height: Height(0.7),
+                weight: Weight(9.9),
+                types: vec![Type(String::from("Insecte"))],
+                color: Color(String::from("Vert")),
+                generation: Generation(1),
+            },
+            Pokemon {
+                name: String::from("ChrysacierBis"),
+                height: Height(0.7),
+                weight: Weight(9.9),
+                types: vec![Type(String::from("Insecte"))],
+                color: Color(String::from("Vert")),
+                generation: Generation(12),
+            },
+            Pokemon {
+                name: String::from("BlagueSurLesDaron-ne-s"),
+                height: Height(0.7),
+                weight: Weight(9.9),
+                types: vec![Type(String::from("Insecte"))],
+                color: Color(String::from("Vert")),
+                generation: Generation(5),
+            },
+            Pokemon {
+                name: String::from("Blanche"),
+                height: Height(0.3),
+                weight: Weight(3.2),
+                types: vec![Type(String::from("Normal"))],
+                color: Color(String::from("Blanc")),
+                generation: Generation(2),
+            },
+            Pokemon {
+                name: String::from("Noirette"),
+                height: Height(0.3),
+                weight: Weight(4.1),
+                types: vec![Type(String::from("Normal"))],
+                color: Color(String::from("Noir")),
+                generation: Generation(2),
+            },
+        ];
+
+        let names: Vec<String> = pokemons.iter().map(|p| p.name.clone()).collect();
+        (names, pokemons)
+    }
+}
