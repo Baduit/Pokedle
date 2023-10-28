@@ -17,7 +17,7 @@ pub enum ReadingError {
     WrongFileStructure,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct Pokemon {
     pub name: String,
     pub height: Height,
@@ -171,20 +171,20 @@ pub fn get_all_pokemons(
 */
 pub type Lang = String;
 
-#[derive(Deserialize, Debug, PartialEq)]
-pub struct Type(String);
+#[derive(Deserialize, Debug, PartialEq, Clone)]
+pub struct Type(pub String);
 
-#[derive(Deserialize, Debug, PartialEq)]
-pub struct Color(String);
+#[derive(Deserialize, Debug, PartialEq, Clone)]
+pub struct Color(pub String);
 
-#[derive(Deserialize, Debug, PartialEq, PartialOrd)]
-pub struct Weight(f64);
+#[derive(Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+pub struct Weight(pub f64);
 
-#[derive(Deserialize, Debug, PartialEq, PartialOrd)]
-pub struct Height(f64);
+#[derive(Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+pub struct Height(pub f64);
 
-#[derive(Deserialize, Debug, PartialEq, PartialOrd)]
-pub struct Generation(u8);
+#[derive(Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+pub struct Generation(pub u8);
 
 /*
     Private stuff
