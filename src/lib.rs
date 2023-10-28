@@ -81,32 +81,47 @@ impl PokemonHandler {
     }
 }
 
-struct Pokedle {
+pub struct Pokedle {
     handlers: BTreeMap<Lang, PokemonHandler>,
 }
+
+#[derive(Error, Debug)]
+pub enum PokedleInitError {
+    #[error("Can't load the data to initialize Pokedle")]
+    DataLoadingError(#[from] ReadingError),
+    #[error("The loaded data are incoherent")]
+    IncoherentData,
+}
+
+#[derive(Error, Debug)]
+pub enum PokdleError {
+    #[error("The language {0} does not exist")]
+    LangDoesNotExist(String),
 }
 
 impl Pokedle {
-    pub fn new<P>(pokle_dir: P) -> Pokedle
+    pub fn new<P>(pokle_dir: P) -> Result<Pokedle, PokedleInitError>
     where
         P: AsRef<Path>,
     {
         // Expect is temporary, todo error handling
-        let names = get_names(pokle_dir.as_ref().to_path_buf()).expect("Can't load the names.");
-        let pokemons = get_all_pokemons(pokle_dir.as_ref().to_path_buf())
-            .expect("Can't load the pokemons data");
+        let names = get_names(pokle_dir.as_ref().to_path_buf())?;
+        let pokemons = get_all_pokemons(pokle_dir.as_ref().to_path_buf())?;
 
         let mut pokedle = Pokedle {
             handlers: BTreeMap::new(),
         };
 
         for ((name_lang, names), (pokemon_lang, pokemons)) in zip(names, pokemons) {
+            if name_lang != pokemon_lang {
+                return Err(PokedleInitError::IncoherentData);
+            }
             assert_eq!(name_lang, pokemon_lang); // todo: real error handling
             pokedle
                 .handlers
                 .insert(name_lang, PokemonHandler::new(names, pokemons));
         }
-        pokedle
+        Ok(pokedle)
     }
 
     pub fn guess(&self, lang: &str, pokemon_name: &str) {}
@@ -128,14 +143,14 @@ mod tests {
     fn pokedle_creatation_simplified_data() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("small_test_data");
-        Pokedle::new(d);
+        Pokedle::new(d).unwrap();
     }
 
     #[test]
     fn pokedle_creatation_real_data() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("poke_data");
-        Pokedle::new(d);
+        Pokedle::new(d).unwrap();
     }
 
     #[test]
