@@ -121,6 +121,25 @@ impl Pokedle {
 mod tests {
     use super::*;
 
+    /*
+     ** Pokedle tests
+     */
+    #[test]
+    fn pokedle_creatation_simplified_data() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("small_test_data");
+        Pokedle::new(d);
+    }
+
+    #[test]
+    fn pokedle_creatation_real_data() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("poke_data");
+        Pokedle::new(d);
+    }
+
+    #[test]
+    fn game_scenario() {}
 
     /*
     ** PokemonHandler tests
