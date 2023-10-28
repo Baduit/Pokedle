@@ -132,10 +132,11 @@ impl Pokedle {
     }
 
     pub fn guess(&mut self, lang: &str, pokemon_name: &str) -> Result<GuessResult, PokedleError> {
-        let handler = match self.handlers.get(lang) {
+        let handler = match self.handlers.get_mut(lang) {
             Some(handler) => handler,
             None => return Err(PokedleError::LangDoesNotExist(String::from(lang))),
         };
+        handler.update_daily_pokemon_if_needed();
 
         let daily_pokemon = handler.get_daily_pokemon();
         if pokemon_name == daily_pokemon.name {
