@@ -1,5 +1,5 @@
 use pokemon::get_all_pokemons;
-use rand::{distributions::Uniform, seq::index};
+use rand::distributions::Uniform;
 use rand::Rng;
 use std::collections::BTreeMap;
 use std::iter::zip;
