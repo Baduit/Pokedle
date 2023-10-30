@@ -1,5 +1,5 @@
 use pokemon::get_all_pokemons;
-use rand::distributions::Uniform;
+use rand::{distributions::Uniform, seq::index};
 use rand::Rng;
 use std::collections::BTreeMap;
 use std::iter::zip;
@@ -27,8 +27,8 @@ struct PokemonHandler {
     pokemons: Vec<Pokemon>,
     daily_pokemon_index: usize,
     last_pokemon_update: DateTime<Utc>,
+    previous_daily_pokemon_index: Option<usize>,
     // Todo: add an id to know if the pokemon changed while the player was playing
-    // Todo: keep the index of the previous pokemon to guess
 }
 
 impl PokemonHandler {
@@ -53,6 +53,7 @@ impl PokemonHandler {
             pokemons,
             daily_pokemon_index: PokemonHandler::get_random_pokemon_index(number_of_pokemons),
             last_pokemon_update: first_generation,
+            previous_daily_pokemon_index: None
         }
     }
 
@@ -76,6 +77,7 @@ impl PokemonHandler {
 
     pub fn update_daily_pokemon_if_needed(&mut self) {
         if self.is_update_needed() {
+            self.previous_daily_pokemon_index = Some(self.daily_pokemon_index);
             self.daily_pokemon_index =
                 PokemonHandler::get_random_pokemon_index(self.pokemons.len());
             self.last_pokemon_update = Utc::now();
@@ -152,6 +154,19 @@ impl Pokedle {
         match self.handlers.get(lang) {
             Some(handler) => Ok(&handler.pokemon_names),
             None => Err(PokedleError::LangDoesNotExist(String::from(lang))),
+        }
+    }
+
+    pub fn get_previous_pokemon_to_guess_name(&self, lang: &str) -> Result<Option<String>, PokedleError> {
+        let handler = match self.handlers.get(lang) {
+            Some(handler) => handler,
+            None => return Err(PokedleError::LangDoesNotExist(String::from(lang))),
+        };
+
+        match handler.previous_daily_pokemon_index {
+            // Ok to unwrap because the index is generated within the bould of this vector
+            Some(index) => Ok(Some(handler.pokemon_names.get(index).unwrap().clone())),
+            None => Ok(None),
         }
     }
 }
@@ -313,6 +328,7 @@ mod tests {
             handler.update_daily_pokemon_if_needed();
             // The creation just happened, so it should not change
             if first_index != handler.daily_pokemon_index {
+                assert_eq!(first_index, handler.previous_daily_pokemon_index.unwrap());
                 index_changed = true;
                 break;
             }
