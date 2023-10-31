@@ -184,21 +184,21 @@ mod tests {
     #[test]
     fn pokedle_creatation_simplified_data() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("small_test_data");
+        d.push("../small_test_data");
         Pokedle::new(d).unwrap();
     }
 
     #[test]
     fn pokedle_creatation_real_data() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("poke_data");
+        d.push("../poke_data");
         Pokedle::new(d).unwrap();
     }
 
     #[test]
     fn game_scenario() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("small_test_data");
+        d.push("../small_test_data");
         let mut pokedle = Pokedle::new(d).unwrap();
         // Cheat a bit to know which pokemon we are trying to guess
         pokedle

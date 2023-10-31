@@ -228,7 +228,7 @@ mod tests {
         };
 
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("poke_data/generated_data/fr/pokedle/11.json");
+        d.push("../poke_data/generated_data/fr/pokedle/11.json");
         let pokemon = read_pokemon(d).unwrap();
         assert_eq!(pokemon, chrysacier);
     }
@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn get_all_names() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("poke_data");
+        d.push("../poke_data");
         let names = get_names(d).unwrap();
         assert_eq!(names["fr"][0], "Bulbizarre");
         assert_eq!(names["de"][0], "Bisasam");
@@ -245,7 +245,7 @@ mod tests {
     #[test]
     fn get_all_pokemons_of_all_lang() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("poke_data");
+        d.push("../poke_data");
         let names = get_all_pokemons(d).unwrap();
         assert_eq!(names["fr"][0].name, "Bulbizarre");
         assert_eq!(names["de"][0].name, "Bisasam");
