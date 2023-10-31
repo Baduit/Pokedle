@@ -113,7 +113,6 @@ impl Pokedle {
     where
         P: AsRef<Path>,
     {
-        // Expect is temporary, todo error handling
         let names = get_names(pokle_dir.as_ref().to_path_buf())?;
         let pokemons = get_all_pokemons(pokle_dir.as_ref().to_path_buf())?;
 
@@ -125,7 +124,7 @@ impl Pokedle {
             if name_lang != pokemon_lang {
                 return Err(PokedleInitError::IncoherentData);
             }
-            assert_eq!(name_lang, pokemon_lang); // todo: real error handling
+
             pokedle
                 .handlers
                 .insert(name_lang, PokemonHandler::new(names, pokemons));
