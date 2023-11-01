@@ -313,9 +313,9 @@ mod tests {
         let current_datetime = Utc::now();
         handler.last_pokemon_update = Utc
             .with_ymd_and_hms(
-                current_datetime.year(),
+                current_datetime.year() - 1,
                 current_datetime.month(),
-                current_datetime.day() - 1,
+                current_datetime.day(),
                 6,
                 0,
                 0,
