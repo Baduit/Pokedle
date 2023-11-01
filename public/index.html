@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <meta content="utf-8" http-equiv="encoding" />
+  <meta name="viewport" content="initial-scale=1.0; maximum-scale=1.0" />
+  <link rel="stylesheet" href="style.css" type="text/css" />
+  <title>Pokedle</title>
+</head>
+
+<body>
+    <h1 id="title" class="noselect">Pokedle</h1>
+    <input type="text" id="title_input" name="lname" onkeypress="onKeyPressed(event)" autofocus list="pokemon_list">
+    <button id="guess_pokemon" type="button" onclick="try_guess_pokemon()">Guess</button>
+    <datalist id="pokemon_list"></datalist>
+    <script src="main.js" type="text/javascript"></script>
+</body>
+
+</html>
