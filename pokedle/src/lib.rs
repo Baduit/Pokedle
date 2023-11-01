@@ -64,7 +64,7 @@ impl PokemonHandler {
     }
 
     pub fn get_pokemon_by_name(&self, name: &str) -> Result<&Pokemon, PokedleError> {
-        match self.pokemons.iter().filter(|p| p.name == name).next() {
+        match self.pokemons.iter().find(|p| p.name == name) {
             Some(pokemon) => Ok(pokemon),
             None => Err(PokedleError::PokemonDoesNotExist(String::from(name))),
         }

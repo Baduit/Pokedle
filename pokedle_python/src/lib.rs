@@ -38,10 +38,7 @@ impl PythonGuessResult {
 #[pymethods]
 impl PythonGuessResult {
     pub fn is_success(&self) -> bool {
-        match &self.comparison {
-            Some(_) => true,
-            None => false,
-        }
+        self.comparison.is_some()
     }
 }
 
