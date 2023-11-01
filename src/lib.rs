@@ -16,6 +16,14 @@ pub use pokemon::{
     NumberComparison, Pokemon, PokemonComparison, ReadingError, Type, TypesComparison, Weight,
 };
 
+#[pymodule]
+#[pyo3(name = "pokedle")]
+fn pokedle_module(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_class::<Pokedle>()?;
+    m.add_class::<PokemonComparison>()?;
+    Ok(())
+}
+
 #[derive(Error, Debug)]
 pub enum PokedleError {
     #[error("The language {0} does not exist")]
