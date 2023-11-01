@@ -1,0 +1,13 @@
+[package]
+name = "pokedle_python"
+version = "0.1.0"
+edition = "2021"
+authors = ["Baduit"]
+
+[lib]
+name = "pokedle"
+crate-type = ["cdylib"]
+
+[dependencies]
+pokedle_core = { path = "../pokedle" }
+pyo3 = { version = "0.20.0", features = ["extension-module"] }

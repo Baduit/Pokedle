@@ -1,6 +1,7 @@
 use fs::File;
 use std::collections::BTreeMap;
 use std::ffi::OsStr;
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -39,6 +40,16 @@ pub enum NumberComparison {
     Equal,
 }
 
+impl fmt::Display for NumberComparison {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Higher => write!(f, "higher"),
+            Self::Lower => write!(f, "lower"),
+            Self::Equal => write!(f, "equal"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum TypesComparison {
     Different,
@@ -46,10 +57,29 @@ pub enum TypesComparison {
     PartiallyEqual,
 }
 
+impl fmt::Display for TypesComparison {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Different => write!(f, "different"),
+            Self::PartiallyEqual => write!(f, "partially_equal"),
+            Self::Equal => write!(f, "equal"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum ColorComparison {
     Different,
     Equal,
+}
+
+impl fmt::Display for ColorComparison {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Different => write!(f, "different"),
+            Self::Equal => write!(f, "equal"),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -59,6 +89,18 @@ pub struct PokemonComparison {
     pub types: TypesComparison,
     pub color: ColorComparison,
     pub generation: NumberComparison,
+}
+
+impl PokemonComparison {
+    pub fn to_array_of_string(&self) -> [String; 5] {
+        [
+            format!("{}", self.height),
+            format!("{}", self.weight),
+            format!("{}", self.types),
+            format!("{}", self.color),
+            format!("{}", self.generation),
+        ]
+    }
 }
 
 // It does not check the name because there is no need to compare pokemons if the name is the same
@@ -272,7 +314,7 @@ mod tests {
             generation: Generation(1),
         };
 
-        let good_guess : PokemonComparison = PokemonComparison {
+        let good_guess: PokemonComparison = PokemonComparison {
             height: NumberComparison::Equal,
             weight: NumberComparison::Equal,
             types: TypesComparison::Equal,
