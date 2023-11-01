@@ -24,6 +24,8 @@ function add_row_in_result_table(results) {
 		let newCell = newRow.insertCell();
 		if (r === "equal") {
 			newCell.classList.add("equal_result");
+			let a_surprise_for_later = document.getElementById("a_surprise_for_later");
+			a_surprise_for_later.textContent = "You won !"
 		} else if (r === "partially_equal") {
 			newCell.classList.add("partially_equal_result");
 		} else {
