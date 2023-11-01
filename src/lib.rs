@@ -1,12 +1,14 @@
 use pokemon::get_all_pokemons;
 use rand::distributions::Uniform;
 use rand::Rng;
-use std::collections::BTreeMap;
 use std::iter::zip;
-use std::path::Path;
+use std::{collections::BTreeMap, path::PathBuf};
 
 use chrono::prelude::*;
 use thiserror::Error;
+
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
 
 mod pokemon;
 pub use pokemon::{
@@ -53,7 +55,7 @@ impl PokemonHandler {
             pokemons,
             daily_pokemon_index: PokemonHandler::get_random_pokemon_index(number_of_pokemons),
             last_pokemon_update: first_generation,
-            previous_daily_pokemon_index: None
+            previous_daily_pokemon_index: None,
         }
     }
 
@@ -90,6 +92,7 @@ impl PokemonHandler {
     }
 }
 
+#[pyclass]
 pub struct Pokedle {
     handlers: BTreeMap<Lang, PokemonHandler>,
 }
@@ -108,13 +111,18 @@ pub enum GuessResult {
     Failure(PokemonComparison),
 }
 
+#[pymethods]
 impl Pokedle {
-    pub fn new<P>(pokle_dir: P) -> Result<Pokedle, PokedleInitError>
-    where
-        P: AsRef<Path>,
-    {
-        let names = get_names(pokle_dir.as_ref().to_path_buf())?;
-        let pokemons = get_all_pokemons(pokle_dir.as_ref().to_path_buf())?;
+    #[new]
+    pub fn new(pokle_dir: &str) -> PyResult<Self> {
+        let names = match get_names(PathBuf::from(pokle_dir)) {
+            Ok(names) => names,
+            Err(err) => return Err(PyValueError::new_err(format!("{}", err))),
+        };
+        let pokemons = match get_all_pokemons(PathBuf::from(pokle_dir)) {
+            Ok(pokemons) => pokemons,
+            Err(err) => return Err(PyValueError::new_err(format!("{}", err))),
+        };
 
         let mut pokedle = Pokedle {
             handlers: BTreeMap::new(),
@@ -122,7 +130,7 @@ impl Pokedle {
 
         for ((name_lang, names), (pokemon_lang, pokemons)) in zip(names, pokemons) {
             if name_lang != pokemon_lang {
-                return Err(PokedleInitError::IncoherentData);
+                return Err(PyValueError::new_err("Incoherent data"));
             }
 
             pokedle
@@ -132,34 +140,50 @@ impl Pokedle {
         Ok(pokedle)
     }
 
-    pub fn guess(&mut self, lang: &str, pokemon_name: &str) -> Result<GuessResult, PokedleError> {
+    pub fn guess(&mut self, lang: &str, pokemon_name: &str) -> PyResult<Option<PokemonComparison>> {
         let handler = match self.handlers.get_mut(lang) {
             Some(handler) => handler,
-            None => return Err(PokedleError::LangDoesNotExist(String::from(lang))),
+            None => {
+                return Err(PyValueError::new_err(format!(
+                    "Langage {} does not exist.",
+                    lang
+                )))
+            }
         };
         handler.update_daily_pokemon_if_needed();
 
         let daily_pokemon = handler.get_daily_pokemon();
         if pokemon_name == daily_pokemon.name {
-            Ok(GuessResult::Success)
+            Ok(None)
         } else {
-            let input_pokemon = handler.get_pokemon_by_name(pokemon_name)?;
+            let input_pokemon = match handler.get_pokemon_by_name(pokemon_name) {
+                Ok(input_pokemon) => input_pokemon,
+                Err(err) => return Err(PyValueError::new_err(format!("{}", err))),
+            };
             let comparison = compare_pokemons(input_pokemon, daily_pokemon);
-            Ok(GuessResult::Failure(comparison))
+            Ok(Some(comparison))
         }
     }
 
-    pub fn get_names(&self, lang: &str) -> Result<&Vec<String>, PokedleError> {
+    pub fn get_names(&self, lang: &str) -> PyResult<Vec<String>> {
         match self.handlers.get(lang) {
-            Some(handler) => Ok(&handler.pokemon_names),
-            None => Err(PokedleError::LangDoesNotExist(String::from(lang))),
+            Some(handler) => Ok(handler.pokemon_names.clone()),
+            None => Err(PyValueError::new_err(format!(
+                "Langage {} does not exist.",
+                lang
+            ))),
         }
     }
 
-    pub fn get_previous_pokemon_to_guess_name(&self, lang: &str) -> Result<Option<String>, PokedleError> {
+    pub fn get_previous_pokemon_to_guess_name(&self, lang: &str) -> PyResult<Option<String>> {
         let handler = match self.handlers.get(lang) {
             Some(handler) => handler,
-            None => return Err(PokedleError::LangDoesNotExist(String::from(lang))),
+            None => {
+                return Err(PyValueError::new_err(format!(
+                    "Langage {} does not exist.",
+                    lang
+                )))
+            }
         };
 
         match handler.previous_daily_pokemon_index {
@@ -184,22 +208,22 @@ mod tests {
     #[test]
     fn pokedle_creatation_simplified_data() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("../small_test_data");
-        Pokedle::new(d).unwrap();
+        d.push("small_test_data");
+        Pokedle::new(d.to_str().unwrap()).unwrap();
     }
 
     #[test]
     fn pokedle_creatation_real_data() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("../poke_data");
-        Pokedle::new(d).unwrap();
+        d.push("poke_data");
+        Pokedle::new(d.to_str().unwrap()).unwrap();
     }
 
     #[test]
     fn game_scenario() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("../small_test_data");
-        let mut pokedle = Pokedle::new(d).unwrap();
+        d.push("small_test_data");
+        let mut pokedle = Pokedle::new(d.to_str().unwrap()).unwrap();
         // Cheat a bit to know which pokemon we are trying to guess
         pokedle
             .handlers
@@ -220,7 +244,7 @@ mod tests {
             .expect_err("'Sacha' should not be a pokemon");
         assert_eq!(
             pokedle.guess("fr", "Herbizarre").unwrap(),
-            GuessResult::Failure(PokemonComparison {
+            Some(PokemonComparison {
                 height: NumberComparison::Lower,
                 weight: NumberComparison::Lower,
                 types: TypesComparison::Equal,
@@ -228,10 +252,7 @@ mod tests {
                 generation: NumberComparison::Equal,
             })
         );
-        assert_eq!(
-            pokedle.guess("fr", "Bulbizarre").unwrap(),
-            GuessResult::Success
-        );
+        assert_eq!(pokedle.guess("fr", "Bulbizarre").unwrap(), None);
     }
 
     /*
