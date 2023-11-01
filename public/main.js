@@ -13,6 +13,23 @@ function is_local() {
 	return window.location.href.startsWith("file") || window.location.href.indexOf("localhost") != -1;
 }
 
+function add_row_in_result_table(results) {
+	var tbodyRef = document.getElementById('result_table').getElementsByTagName('tbody')[0];
+
+	// Insert a row at the end of table
+	var newRow = tbodyRef.insertRow();
+
+	if (results == null) {
+		results = [ "equal", "equal", "equal", "equal", "equal" ]
+	}
+
+	for (const r of results) {
+		var newCell = newRow.insertCell();
+		var newText = document.createTextNode(r);
+		newCell.appendChild(newText);
+	}
+}
+
 function try_guess_pokemon() {
 	let pokemon_name = document.getElementById("title_input").value
 	// Capitalize first character
@@ -45,6 +62,7 @@ function try_guess_pokemon() {
 			console.log(text_response)
 			let object_response = JSON.parse(text_response)
 			console.log(object_response)
+			add_row_in_result_table(object_response)
 
 		})
 }
