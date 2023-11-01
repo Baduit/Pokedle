@@ -13,3 +13,15 @@ table {
   tr:nth-child(even) {
 	background-color: #dddddd;
   }
+
+  .equal_result {
+	background-color: #00ff2a;
+  }
+
+  .different_result {
+	background-color: #f80505;
+  }
+
+  .partially_equal_result {
+	background-color: #ffa600;
+  }

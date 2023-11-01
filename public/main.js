@@ -14,19 +14,23 @@ function is_local() {
 }
 
 function add_row_in_result_table(results) {
-	var tbodyRef = document.getElementById('result_table').getElementsByTagName('tbody')[0];
-
-	// Insert a row at the end of table
-	var newRow = tbodyRef.insertRow();
-
 	if (results == null) {
 		results = [ "equal", "equal", "equal", "equal", "equal" ]
 	}
 
+	let tbodyRef = document.getElementById('result_table').getElementsByTagName('tbody')[0];
+	let newRow = tbodyRef.insertRow();
 	for (const r of results) {
-		var newCell = newRow.insertCell();
-		var newText = document.createTextNode(r);
-		newCell.appendChild(newText);
+		let newCell = newRow.insertCell();
+		if (r === "equal") {
+			newCell.classList.add("equal_result");
+		} else if (r === "partially_equal") {
+			newCell.classList.add("partially_equal_result");
+		} else {
+			newCell.classList.add("different_result");
+		}
+		let text_element = document.createTextNode(r);
+		newCell.appendChild(text_element);
 	}
 }
 
