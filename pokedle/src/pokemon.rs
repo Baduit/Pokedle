@@ -107,7 +107,7 @@ impl PokemonComparison {
 pub fn compare_pokemons(guess: &Pokemon, pokemon_to_guess: &Pokemon) -> PokemonComparison {
     let height = if guess.height == pokemon_to_guess.height {
         NumberComparison::Equal
-    } else if guess.height > pokemon_to_guess.height {
+    } else if guess.height < pokemon_to_guess.height {
         NumberComparison::Higher
     } else {
         NumberComparison::Lower
@@ -115,7 +115,7 @@ pub fn compare_pokemons(guess: &Pokemon, pokemon_to_guess: &Pokemon) -> PokemonC
 
     let weight = if guess.weight == pokemon_to_guess.weight {
         NumberComparison::Equal
-    } else if guess.weight > pokemon_to_guess.weight {
+    } else if guess.weight < pokemon_to_guess.weight {
         NumberComparison::Higher
     } else {
         NumberComparison::Lower
@@ -146,7 +146,7 @@ pub fn compare_pokemons(guess: &Pokemon, pokemon_to_guess: &Pokemon) -> PokemonC
 
     let generation = if guess.generation == pokemon_to_guess.generation {
         NumberComparison::Equal
-    } else if guess.generation > pokemon_to_guess.generation {
+    } else if guess.generation < pokemon_to_guess.generation {
         NumberComparison::Higher
     } else {
         NumberComparison::Lower
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compare_partial_equal_type_higher_numbers() {
+    fn test_compare_partial_equal_type_lower_numbers() {
         // This is not a real use case, but it allows to test equality on all fields
         let chrysacier = Pokemon {
             name: String::from("Chrysacier"),
@@ -347,11 +347,11 @@ mod tests {
         };
 
         let expected_result = PokemonComparison {
-            height: NumberComparison::Higher,
-            weight: NumberComparison::Higher,
+            height: NumberComparison::Lower,
+            weight: NumberComparison::Lower,
             types: TypesComparison::PartiallyEqual,
             color: ColorComparison::Different,
-            generation: NumberComparison::Higher,
+            generation: NumberComparison::Lower,
         };
 
         assert_eq!(compare_pokemons(&my_creature, &chrysacier), expected_result);
@@ -379,11 +379,11 @@ mod tests {
         };
 
         let expected_result = PokemonComparison {
-            height: NumberComparison::Lower,
-            weight: NumberComparison::Lower,
+            height: NumberComparison::Higher,
+            weight: NumberComparison::Higher,
             types: TypesComparison::PartiallyEqual,
             color: ColorComparison::Different,
-            generation: NumberComparison::Lower,
+            generation: NumberComparison::Higher,
         };
 
         assert_eq!(compare_pokemons(&chrysacier, &my_creature), expected_result);
@@ -411,11 +411,11 @@ mod tests {
         };
 
         let expected_result = PokemonComparison {
-            height: NumberComparison::Lower,
-            weight: NumberComparison::Lower,
+            height: NumberComparison::Higher,
+            weight: NumberComparison::Higher,
             types: TypesComparison::Different,
             color: ColorComparison::Different,
-            generation: NumberComparison::Lower,
+            generation: NumberComparison::Higher,
         };
         assert_eq!(compare_pokemons(&chrysacier, &my_creature), expected_result);
     }

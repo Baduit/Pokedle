@@ -221,8 +221,8 @@ mod tests {
         assert_eq!(
             pokedle.guess("fr", "Herbizarre").unwrap(),
             GuessResult::Failure(PokemonComparison {
-                height: NumberComparison::Higher,
-                weight: NumberComparison::Higher,
+                height: NumberComparison::Lower,
+                weight: NumberComparison::Lower,
                 types: TypesComparison::Equal,
                 color: ColorComparison::Equal,
                 generation: NumberComparison::Equal,
