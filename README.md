@@ -1,7 +1,7 @@
 # Pokedle
 Your second daily dose of Pokemon
 
-Todo: add link when this is live
+You can play here: https://pokedle.baduit.eu/
 
 I was inspired by [Loldle](https://loldle.net/classic) to do it, but when I had the idea [Pokédle](https://pokedle.net/classic) was not created yet. After I worked on this (some time passed), I checked and now it exists. I decided to finish it anyway, and at least it made me practice a bit rust and learn to use [pyo3](https://crates.io/crates/pyo3).
 
