@@ -34,6 +34,8 @@ function add_cell(row, comparison, cell_text) {
 }
 
 function add_row_in_result_table(results) {
+	console.log(results)
+
 	let tbodyRef = document.getElementById('result_table').getElementsByTagName('tbody')[0];
 	let newRow = tbodyRef.insertRow();
 	add_cell(newRow, results.height.comparison, results.height.pokemon)
@@ -65,10 +67,8 @@ async function try_guess_pokemon() {
 	let url;
 	if (is_local()) {
 		url_guess = new URL("http://localhost:3412/guess");
-		url_get_pokemon = new URL("http://localhost:3412/guess");
 	} else {
-		url_guess = new URL("https://pokedle.baduit.eu/pokemon");
-		url_get_pokemon = new URL("https://pokedle.baduit.eu/pokemon");
+		url_guess = new URL("https://pokedle.baduit.eu/guess");
 	}
 
 	url_guess.searchParams.append("pokemon_name", pokemon_name);
