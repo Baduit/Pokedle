@@ -20,7 +20,16 @@ pub use pokemon::{
 #[pyo3(name = "pokedle")]
 fn pokedle_module(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<Pokedle>()?;
+    m.add_class::<Pokemon>()?;
+    m.add_class::<Height>()?;
+    m.add_class::<Weight>()?;
+    m.add_class::<Type>()?;
+    m.add_class::<Color>()?;
+    m.add_class::<Generation>()?;
     m.add_class::<PokemonComparison>()?;
+    m.add_class::<TypesComparison>()?;
+    m.add_class::<NumberComparison>()?;
+    m.add_class::<ColorComparison>()?;
     Ok(())
 }
 
@@ -105,20 +114,6 @@ pub struct Pokedle {
     handlers: BTreeMap<Lang, PokemonHandler>,
 }
 
-#[derive(Error, Debug)]
-pub enum PokedleInitError {
-    #[error("Can't load the data to initialize Pokedle")]
-    DataLoadingError(#[from] ReadingError),
-    #[error("The loaded data are incoherent")]
-    IncoherentData,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum GuessResult {
-    Success,
-    Failure(PokemonComparison),
-}
-
 #[pymethods]
 impl Pokedle {
     #[new]
@@ -148,7 +143,7 @@ impl Pokedle {
         Ok(pokedle)
     }
 
-    pub fn guess(&mut self, lang: &str, pokemon_name: &str) -> PyResult<Option<PokemonComparison>> {
+    pub fn guess(&mut self, lang: &str, pokemon_name: &str) -> PyResult<PokemonComparison> {
         let handler = match self.handlers.get_mut(lang) {
             Some(handler) => handler,
             None => {
@@ -161,16 +156,13 @@ impl Pokedle {
         handler.update_daily_pokemon_if_needed();
 
         let daily_pokemon = handler.get_daily_pokemon();
-        if pokemon_name == daily_pokemon.name {
-            Ok(None)
-        } else {
-            let input_pokemon = match handler.get_pokemon_by_name(pokemon_name) {
-                Ok(input_pokemon) => input_pokemon,
-                Err(err) => return Err(PyValueError::new_err(format!("{}", err))),
-            };
-            let comparison = compare_pokemons(input_pokemon, daily_pokemon);
-            Ok(Some(comparison))
-        }
+
+        let input_pokemon = match handler.get_pokemon_by_name(pokemon_name) {
+            Ok(input_pokemon) => input_pokemon,
+            Err(err) => return Err(PyValueError::new_err(format!("{}", err))),
+        };
+        let comparison = compare_pokemons(input_pokemon, daily_pokemon);
+        Ok(comparison)
     }
 
     pub fn get_names(&self, lang: &str) -> PyResult<Vec<String>> {
@@ -198,6 +190,23 @@ impl Pokedle {
             // Ok to unwrap because the index is generated within the bould of this vector
             Some(index) => Ok(Some(handler.pokemon_names.get(index).unwrap().clone())),
             None => Ok(None),
+        }
+    }
+
+    pub fn get_pokemon_by_name(&self, lang: &str, pokemon_name: &str) -> PyResult<Pokemon> {
+        let handler = match self.handlers.get(lang) {
+            Some(handler) => handler,
+            None => {
+                return Err(PyValueError::new_err(format!(
+                    "Langage {} does not exist.",
+                    lang
+                )))
+            }
+        };
+
+        match handler.get_pokemon_by_name(pokemon_name) {
+            Ok(pokemon) => Ok(pokemon.clone()),
+            Err(err) => Err(PyValueError::new_err(format!("{}", err))),
         }
     }
 }
@@ -252,15 +261,26 @@ mod tests {
             .expect_err("'Sacha' should not be a pokemon");
         assert_eq!(
             pokedle.guess("fr", "Herbizarre").unwrap(),
-            Some(PokemonComparison {
+            PokemonComparison {
+                success: false,
                 height: NumberComparison::Lower,
                 weight: NumberComparison::Lower,
                 types: TypesComparison::Equal,
                 color: ColorComparison::Equal,
                 generation: NumberComparison::Equal,
-            })
+            }
         );
-        assert_eq!(pokedle.guess("fr", "Bulbizarre").unwrap(), None);
+        assert_eq!(
+            pokedle.guess("fr", "Bulbizarre").unwrap(),
+            PokemonComparison {
+                success: true,
+                height: NumberComparison::Equal,
+                weight: NumberComparison::Equal,
+                types: TypesComparison::Equal,
+                color: ColorComparison::Equal,
+                generation: NumberComparison::Equal,
+            }
+        );
     }
 
     /*

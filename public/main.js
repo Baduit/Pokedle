@@ -13,26 +13,38 @@ function is_local() {
 	return window.location.href.startsWith("file") || window.location.href.indexOf("localhost") != -1;
 }
 
-function add_row_in_result_table(results) {
-	if (results == null) {
-		results = ["equal", "equal", "equal", "equal", "equal"];
+function add_cell(row, comparison, cell_text) {
+	let newCell = row.insertCell();
+
+	if (comparison === "equal") {
+		newCell.classList.add("equal_result");
+	} else if (comparison === "partially_equal") {
+		newCell.classList.add("partially_equal_result");
+	} else {
+		newCell.classList.add("different_result");
+		if (comparison === "higher") {
+			cell_text += " ↑"
+		} else if (comparison === "lower") {
+			cell_text += " ↓"
+		}
 	}
 
+	let text_element = document.createTextNode(cell_text);
+	newCell.appendChild(text_element);
+}
+
+function add_row_in_result_table(results) {
 	let tbodyRef = document.getElementById('result_table').getElementsByTagName('tbody')[0];
 	let newRow = tbodyRef.insertRow();
-	for (const r of results) {
-		let newCell = newRow.insertCell();
-		if (r === "equal") {
-			newCell.classList.add("equal_result");
-			let a_surprise_for_later = document.getElementById("a_surprise_for_later");
-			a_surprise_for_later.textContent = "You won !"
-		} else if (r === "partially_equal") {
-			newCell.classList.add("partially_equal_result");
-		} else {
-			newCell.classList.add("different_result");
-		}
-		let text_element = document.createTextNode(r);
-		newCell.appendChild(text_element);
+	add_cell(newRow, results.height.comparison, results.height.pokemon)
+	add_cell(newRow, results.weight.comparison, results.weight.pokemon)
+	add_cell(newRow, results.types.comparison, results.types.pokemon)
+	add_cell(newRow, results.color.comparison, results.color.pokemon)
+	add_cell(newRow, results.generation.comparison, results.generation.pokemon)
+
+	if (results.success) {
+		let a_surprise_for_later = document.getElementById("a_surprise_for_later");
+		a_surprise_for_later.textContent = "You won !"
 	}
 }
 
@@ -52,21 +64,21 @@ async function try_guess_pokemon() {
 
 	let url;
 	if (is_local()) {
-		url = new URL("http://localhost:3412/guess");
+		url_guess = new URL("http://localhost:3412/guess");
+		url_get_pokemon = new URL("http://localhost:3412/guess");
 	} else {
-		url = new URL("https://pokedle.baduit.eu/guess");
+		url_guess = new URL("https://pokedle.baduit.eu/pokemon");
+		url_get_pokemon = new URL("https://pokedle.baduit.eu/pokemon");
 	}
 
-	url.searchParams.append("pokemon_name", pokemon_name);
-	url.searchParams.append("lang", "fr");
+	url_guess.searchParams.append("pokemon_name", pokemon_name);
+	url_guess.searchParams.append("lang", "fr");
+	let guess_response = await fetch(url_guess, options);
+	let text_guess_response = await guess_response.text();
+	let guess_result = JSON.parse(text_guess_response);
+	console.log(guess_result);
 
-	let response = await fetch(url, options);
-	let text_response = await response.text();
-	console.log(text_response);
-	let object_response = JSON.parse(text_response);
-	console.log(object_response);
-
-	add_row_in_result_table(object_response);
+	add_row_in_result_table(guess_result);
 }
 
 function update_pokemon_list() {

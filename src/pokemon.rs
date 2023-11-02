@@ -1,14 +1,12 @@
 use fs::File;
 use std::collections::BTreeMap;
 use std::ffi::OsStr;
-use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 use thiserror::Error;
 
-use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
 #[derive(Error, Debug)]
@@ -21,13 +19,20 @@ pub enum ReadingError {
     WrongFileStructure,
 }
 
+#[pyclass]
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct Pokemon {
+    #[pyo3(get)]
     pub name: String,
+    #[pyo3(get)]
     pub height: Height,
+    #[pyo3(get)]
     pub weight: Weight,
+    #[pyo3(get)]
     pub types: Vec<Type>,
+    #[pyo3(get)]
     pub color: Color,
+    #[pyo3(get)]
     pub generation: Generation,
 }
 
@@ -36,79 +41,92 @@ struct Metadata {
     names: Vec<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[pyclass]
+#[derive(Debug, PartialEq, Clone)]
 pub enum NumberComparison {
     Higher,
     Lower,
     Equal,
 }
 
-impl fmt::Display for NumberComparison {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+#[pymethods]
+impl NumberComparison {
+    fn to_string(&self) -> String {
         match self {
-            Self::Higher => write!(f, "higher"),
-            Self::Lower => write!(f, "lower"),
-            Self::Equal => write!(f, "equal"),
+            Self::Higher => String::from("higher"),
+            Self::Lower => String::from("lower"),
+            Self::Equal => String::from("equal"),
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[pyclass]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TypesComparison {
     Different,
     Equal,
     PartiallyEqual,
 }
 
-impl fmt::Display for TypesComparison {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+#[pymethods]
+impl TypesComparison {
+    fn to_string(&self) -> String {
         match self {
-            Self::Different => write!(f, "different"),
-            Self::PartiallyEqual => write!(f, "partially_equal"),
-            Self::Equal => write!(f, "equal"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ColorComparison {
-    Different,
-    Equal,
-}
-
-impl fmt::Display for ColorComparison {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Different => write!(f, "different"),
-            Self::Equal => write!(f, "equal"),
+            Self::Different => String::from("different"),
+            Self::PartiallyEqual => String::from("partially_equal"),
+            Self::Equal => String::from("equal"),
         }
     }
 }
 
 #[pyclass]
-#[derive(Debug, PartialEq)]
-pub struct PokemonComparison {
-    pub height: NumberComparison,
-    pub weight: NumberComparison,
-    pub types: TypesComparison,
-    pub color: ColorComparison,
-    pub generation: NumberComparison,
+#[derive(Debug, PartialEq, Clone)]
+pub enum ColorComparison {
+    Different,
+    Equal,
 }
 
-impl PokemonComparison {
-    pub fn to_array_of_string(&self) -> [String; 5] {
-        [
-            format!("{}", self.height),
-            format!("{}", self.weight),
-            format!("{}", self.types),
-            format!("{}", self.color),
-            format!("{}", self.generation),
-        ]
+#[pymethods]
+impl ColorComparison {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Different => String::from("different"),
+            Self::Equal => String::from("equal"),
+        }
     }
 }
 
-// It does not check the name because there is no need to compare pokemons if the name is the same
+#[pyclass]
+#[derive(Debug, PartialEq, Clone)]
+pub struct PokemonComparison {
+    #[pyo3(get)]
+    pub success: bool,
+    #[pyo3(get)]
+    pub height: NumberComparison,
+    #[pyo3(get)]
+    pub weight: NumberComparison,
+    #[pyo3(get)]
+    pub types: TypesComparison,
+    #[pyo3(get)]
+    pub color: ColorComparison,
+    #[pyo3(get)]
+    pub generation: NumberComparison,
+}
+
+
+
 pub fn compare_pokemons(guess: &Pokemon, pokemon_to_guess: &Pokemon) -> PokemonComparison {
+    if guess.name == pokemon_to_guess.name {
+        return PokemonComparison {
+            success: true,
+            height: NumberComparison::Equal,
+            weight: NumberComparison::Equal,
+            types: TypesComparison::Equal,
+            color: ColorComparison::Equal,
+            generation: NumberComparison::Equal,
+        }
+    }
+
     let height = if guess.height == pokemon_to_guess.height {
         NumberComparison::Equal
     } else if guess.height < pokemon_to_guess.height {
@@ -157,6 +175,7 @@ pub fn compare_pokemons(guess: &Pokemon, pokemon_to_guess: &Pokemon) -> PokemonC
     };
 
     PokemonComparison {
+        success: false,
         height,
         weight,
         types,
@@ -208,20 +227,60 @@ pub fn get_all_pokemons(
 */
 pub type Lang = String;
 
+#[pyclass]
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct Type(pub String);
 
+#[pymethods]
+impl Type {
+    pub fn to_string(&self) -> String {
+        format!("{}", self.0)
+    }
+}
+
+#[pyclass]
 #[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct Color(pub String);
 
+#[pymethods]
+impl Color {
+    pub fn to_string(&self) -> String {
+        format!("{}", self.0)
+    }
+}
+
+#[pyclass]
 #[derive(Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct Weight(pub f64);
 
+#[pymethods]
+impl Weight {
+    pub fn to_string(&self) -> String {
+        format!("{}", self.0)
+    }
+}
+
+#[pyclass]
 #[derive(Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct Height(pub f64);
 
+#[pymethods]
+impl Height {
+    pub fn to_string(&self) -> String {
+        format!("{}", self.0)
+    }
+}
+
+#[pyclass]
 #[derive(Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct Generation(pub u8);
+
+#[pymethods]
+impl Generation {
+    pub fn to_string(&self) -> String {
+        format!("{}", self.0)
+    }
+}
 
 /*
     Private stuff
@@ -319,6 +378,7 @@ mod tests {
         };
 
         let good_guess: PokemonComparison = PokemonComparison {
+            success: true,
             height: NumberComparison::Equal,
             weight: NumberComparison::Equal,
             types: TypesComparison::Equal,
@@ -351,6 +411,7 @@ mod tests {
         };
 
         let expected_result = PokemonComparison {
+            success: false,
             height: NumberComparison::Lower,
             weight: NumberComparison::Lower,
             types: TypesComparison::PartiallyEqual,
@@ -383,6 +444,7 @@ mod tests {
         };
 
         let expected_result = PokemonComparison {
+            success: false,
             height: NumberComparison::Higher,
             weight: NumberComparison::Higher,
             types: TypesComparison::PartiallyEqual,
@@ -415,6 +477,7 @@ mod tests {
         };
 
         let expected_result = PokemonComparison {
+            success: false,
             height: NumberComparison::Higher,
             weight: NumberComparison::Higher,
             types: TypesComparison::Different,
